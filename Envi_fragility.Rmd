@@ -1,0 +1,311 @@
+---
+title: "Env.Fragility Index Questions"
+author: "Faustin Kambale"
+date: "2024-09-26"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(readxl)
+library(purrr)
+library(janitor)
+library(forcats)
+library(scales)
+library(knitr)
+library(kableExtra)
+library(sjmisc)
+library(likert)
+library(writexl)
+library(lubridate)
+library(ggplot2)
+library(dplyr)
+library(psych)
+library(stringr)
+library(gridExtra)
+```
+
+#working Directory
+
+```{r setup, include=FALSE}
+setwd("/Users/faustinkambale/Library/CloudStorage/OneDrive-DukeUniversity/Duke/Classes/Fall 2024/Bass Connextion/Env-description/Duke-OIM")
+```
+
+#Insert Dataset
+
+```{r}
+OIM_dataset <- read.csv(file ="/Users/faustinkambale/Library/CloudStorage/OneDrive-DukeUniversity/Duke/Classes/Fall 2024/Bass Connextion/Env-description/Duke-OIM/Bass_Team_Data_V2 copy.csv", header=TRUE,skip=0)
+describe(OIM_dataset$Q11.10B_unimputed)
+```
+
+#Environmental Fragility
+##Environmental Fragility Index Questions
+##Extract columns to work with 
+```{r}
+selected_columns <- c('Q11.10A_unimputed', 'Q11.10B_unimputed', 'Q11.10C_unimputed', 'Q11.10D_unimputed', 'Q11.11_unimputed', 'Q11.2', 'Q11.3', 'Q11.5', 'Q11.7.1', 'Q11.7.2', 'Q11.7.3', 'Q11.7.4', 'Q11.7.5', 'Q11.7.6', 'Q11.7.7', 'Q11.7.8', 
+                            'Q11.8.1', 'Q11.8.2', 'Q11.8.3', 'Q11.8.4', 'Q11.8.5', 'Q11.8.6', 'Q11.8.7', 'Q11.12')
+env_data <- OIM_dataset %>%
+  select(all_of(selected_columns))
+```
+
+#Data description 
+In this part of analysis, answers are scaled from 0-1:  
+0 = Not severe at all (no impact)
+0.25 = Not severe
+0.50 = Somewhat severe
+0.75 = Severe
+1 = Extremely severe
+-2 = Prefer not to answer (NA)
+
+## Climate change’s impact on income
+
+###Q11.10A Many people in South Sudan have experienced the following: too much rain, too little rain, temperatures that are too high, temperatures that are too low, pests and crop diseases, and deforestation and erosion. How severe would you say the impact of any of these experiences have been on your household income, on a scale from 1 to 5 where 1 means “not severe at all and 5 means “extremely severe?”
+
+
+```{r}
+inc_data <- env_data %>% 
+  summarize(mean = mean(Q11.10A_unimputed, na.rm = TRUE)) %>%
+  kable(align = "lc") %>%
+  kable_styling(position = "left", full_width = F)
+
+# Calculate the frequency and percentage of each response
+inc_data <- env_data %>%
+  mutate(Q11.10A_unimputed = as.numeric(Q11.10A_unimputed))
+
+inc_table <- env_data %>%
+  group_by(Q11.10A_unimputed) %>%
+  summarize(Frequency = n()) %>%
+  mutate(Percentage = round((Frequency / sum(Frequency)) * 100, 1)) %>%
+  ungroup() %>%
+  arrange(Q11.10A_unimputed) %>%
+  mutate(Response = dplyr::recode(Q11.10A_unimputed,
+                           `0` = "No impact",
+                           `0.25` = "Not severe",
+                           `0.5` = "Somewhat severe",
+                           `0.75` = "Severe",
+                           `1` = "Extremely severe"))
+
+inc_table %>%
+  select(Response, Frequency, Percentage) %>%
+  kable(align = "c", col.names = c("Response", "Frequency", "Percentage (%)")) %>%
+  kable_styling(position = "center", full_width = F, bootstrap_options = c("striped", "hover"))
+inc_table
+
+#histogram of the climate change's impact on income
+climchange <- ggplot(env_data, aes(x = Q11.10A_unimputed)) +
+  geom_histogram(binwidth = 0.125, fill = "skyblue", color = "black", alpha = 0.7) +
+  scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                     labels = c("No impact","Not severe", "Somewhat severe", "Severe","Extremely severe")) +
+  labs(title = "Climate Change’s Impact on Income",
+       x = "Impact preception", y = "Frequency") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+   coord_flip()
+print(climchange)
+```
+
+## Climate change’s impact on food consumption
+### Q11.10B And how severe would you say the impact of any of these experiences have been on your household food consumption?
+```{r}
+food_data <- env_data %>%
+  summarize(mean = mean(Q11.10B_unimputed, na.rm = TRUE)) %>%
+  kable(align = "lc") %>%
+  kable_styling(position = "left", full_width = F)
+food_data 
+
+# Calculate the frequency and percentage of each response
+food_data <- env_data %>%
+  mutate(Q11.10B_unimputed = as.numeric(Q11.10B_unimputed))
+
+food_table <- env_data %>%
+  group_by(Q11.10B_unimputed) %>%
+  summarize(Frequency = n()) %>%
+  mutate(Percentage = round((Frequency / sum(Frequency)) * 100, 1)) %>%
+  ungroup() %>%
+  arrange(Q11.10B_unimputed) %>%
+  mutate(Response = dplyr::recode(Q11.10B_unimputed,
+                           `0` = "No impact",
+                           `0.25` = "Not severe",
+                           `0.5` = "Somewhat severe",
+                           `0.75` = "Severe",
+                           `1` = "Extremely severe"))
+
+food_table %>%
+  select(Response, Frequency, Percentage) %>%
+  kable(align = "c", col.names = c("Response", "Frequency", "Percentage (%)")) %>%
+  kable_styling(position = "center", full_width = F, bootstrap_options = c("striped", "hover"))
+
+#histogram of the climate change's impact on Food Consumption
+climfood <- ggplot(env_data, aes(x = Q11.10B_unimputed)) +
+  geom_histogram(binwidth = 0.125, fill = "skyblue", color = "black", alpha = 0.7) +
+  scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                     labels = c("No impact","Not severe", "Somewhat severe", "Severe","Extremely severe")) +
+  labs(title = "Climate Change’s Impact on Food Consumption",
+       x = "Impact preception", y = "Frequency") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+   coord_flip()
+print(climfood)
+```
+
+## Climate change’s impact on mobility
+### Q11.10C And how severe would you say the impact of any of these experiences have been on your household’s ability to choose where you live?
+
+```{r}
+mobility_data <- env_data %>% 
+  summarize(mean = mean(Q11.10C_unimputed, na.rm = TRUE)) %>%
+  kable(align = "lc") %>%
+  kable_styling(position = "left", full_width = F)
+mobility_data
+
+# Calculate the frequency and percentage of each response
+mobility_data <- env_data %>%
+  mutate(Q11.10C_unimputed = as.numeric(Q11.10C_unimputed))
+
+mobility_table <- env_data %>%
+  group_by(Q11.10C_unimputed) %>%
+  summarize(Frequency = n()) %>%
+  mutate(Percentage = round((Frequency / sum(Frequency)) * 100, 1)) %>%
+  ungroup() %>%
+  arrange(Q11.10C_unimputed) %>%
+  mutate(Response = dplyr::recode(Q11.10C_unimputed,
+                           `0` = "No impact",
+                           `0.25` = "Not severe",
+                           `0.5` = "Somewhat severe",
+                           `0.75` = "Severe",
+                           `1` = "Extremely severe"))
+
+mobility_table %>%
+  select(Response, Frequency, Percentage) %>%
+  kable(align = "c", col.names = c("Response", "Frequency", "Percentage (%)")) %>%
+  kable_styling(position = "center", full_width = F, bootstrap_options = c("striped", "hover"))
+
+
+#histogram of the climate change's impact on Mobility
+climmobility <- ggplot(env_data, aes(x = Q11.10C_unimputed)) +
+  geom_histogram(binwidth = 0.125, fill = "skyblue", color = "black", alpha = 0.7) +
+  scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                     labels = c("No impact","Not severe", "Somewhat severe", "Severe","Extremely severe")) +
+  labs(title = "Climate Change’s Impact on Mobility",
+       x = "Impact preception", y = "Frequency") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+   coord_flip()
+print(climmobility)
+```
+
+## Climate change’s impact on health
+### Q11.10D And how severe would you say the impact of any of these experiences have been on your household’s health?
+
+```{r}
+health_data <- env_data %>% 
+  summarize(mean = mean(Q11.10D_unimputed, na.rm = TRUE)) %>%
+  kable(align = "lc") %>%
+  kable_styling(position = "left", full_width = F)
+health_data
+
+# Calculate the frequency and percentage of each response
+health_data <- env_data %>%
+  mutate(Q11.10C_unimputed = as.numeric(Q11.10D_unimputed))
+
+health_table <- env_data %>%
+  group_by(Q11.10D_unimputed) %>%
+  summarize(Frequency = n()) %>%
+  mutate(Percentage = round((Frequency / sum(Frequency)) * 100, 1)) %>%
+  ungroup() %>%
+  arrange(Q11.10D_unimputed) %>%
+  mutate(Response = dplyr::recode(Q11.10D_unimputed,
+                           `0` = "No impact",
+                           `0.25` = "Not severe",
+                           `0.5` = "Somewhat severe",
+                           `0.75` = "Severe",
+                           `1` = "Extremely severe"))
+
+health_table %>%
+  select(Response, Frequency, Percentage) %>%
+  kable(align = "c", col.names = c("Response", "Frequency", "Percentage (%)")) %>%
+  kable_styling(position = "center", full_width = F, bootstrap_options = c("striped", "hover"))
+
+
+#histogram of the climate change's impact on heath
+climhealth <- ggplot(env_data, aes(x = Q11.10D_unimputed)) +
+  geom_histogram(binwidth = 0.125, fill = "skyblue", color = "black", alpha = 0.7) +
+  scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                     labels = c("No impact","Not severe", "Somewhat severe", "Severe","Extremely severe")) +
+  labs(title = "Climate Change’s Impact on Health",
+       x = "Impact preception", y = "Frequency") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+   coord_flip()
+print(climhealth)
+```
+
+## Ability to act on early warning information to ensure household safety
+### Q11.11 Imagine that there was a flood coming to your town tomorrow. If you knew about this incoming flood before the water arrived, to what extent do you agree with the following statement: “I would be able to use this information to protect my household?”
+
+In this part of analysis, answers are scaled from 0-1:
+
+0 = Strongly agree
+0.25 = Agree
+0.50 = Neither agree nor disagree
+0.75 = Disagree
+1 = Strongly disagree
+#ata = ability to act
+
+```{r}
+ata_data <- env_data %>% 
+  summarize(mean = mean(Q11.11_unimputed, na.rm = TRUE)) %>%
+  kable(align = "lc") %>%
+  kable_styling(position = "left", full_width = F)
+ata_data
+
+# Calculate the frequency and percentage of each response
+ata_data <- env_data %>%
+  mutate(Q11.11_unimputed = as.numeric(Q11.11_unimputed))
+
+ata_table <- env_data %>%
+  group_by(Q11.11_unimputed) %>%
+  summarize(Frequency = n()) %>%
+  mutate(Percentage = round((Frequency / sum(Frequency)) * 100, 1)) %>%
+  ungroup() %>%
+  arrange(Q11.11_unimputed) %>%
+  mutate(Response = dplyr::recode(Q11.11_unimputed,
+                           `0` = "Strongly agree",
+                           `0.25` = "Agree",
+                           `0.5` = "Neither agree nor disagree",
+                           `0.75` = "Disagree",
+                           `1` = "Strongly disagree"))
+
+ata_table %>%
+  select(Response, Frequency, Percentage) %>%
+  kable(align = "c", col.names = c("Response", "Frequency", "Percentage (%)")) %>%
+  kable_styling(position = "center", full_width = F, bootstrap_options = c("striped", "hover"))
+
+
+#histogram of the climate change's impact on people's ability to act
+climata <- ggplot(env_data, aes(x = Q11.11_unimputed)) +
+  geom_histogram(binwidth = 0.125, fill = "skyblue", color = "black", alpha = 0.7) +
+  scale_x_continuous(breaks = c(0, 0.25, 0.5, 0.75, 1),
+                     labels = c("Strongly agree","Agree", "Neither agree nor disagree", "Disagree","Strongly disagree")) +
+  labs(title = "Climate Change’s Impact on People's abilty to act",
+       x = "Impact preception", y = "Frequency") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.text.x = element_text(angle = 45, hjust = 1))+
+   coord_flip()
+print(climata)
+```
+
+##Additional indicators to come 
+#Water source 
+
+# useful video to view : https://youtu.be/ZWk4jC0a_8w?si=OdZHTVXSyr6Q_TkB
+
